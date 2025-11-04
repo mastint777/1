@@ -1,0 +1,49 @@
+name: Deploy to VDS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: SSH to server and deploy
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VDS_HOST }}
+          username: ${{ secrets.VDS_USER }}
+          password: ${{ secrets.VDS_PASSWORD }}
+          port: 22
+          script: |
+            set -e
+
+            # если папки /opt/1 нет — создаём и клонируем репозиторий
+            if [ ! -d /opt/1 ]; then
+              mkdir -p /opt
+              cd /opt
+              git clone https://github.com/mastint777/1.git
+            fi
+
+            # обновляем код
+            cd /opt/1
+            git pull
+
+            # ---- backend ----
+            cd /opt/1/backend
+            python3 -m venv venv || true
+            . venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+            # ---- frontend ----
+            cd /opt/1/frontend
+            npm install
+            npm run build
+
+            # тут ПОКА только сборка, запуск настроим отдельно

@@ -28,9 +28,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          # БЫЛО: frontend/package-lock.json (этого файла нет)
-          cache-dependency-path: frontend/package.json
 
       - name: Install dependencies
         run: cd frontend && npm ci
@@ -41,7 +38,6 @@ jobs:
         run: cd frontend && npm run build
 
       - name: Upload artifact
-        # БЫЛО: actions/upload-pages-artifact@v2
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./frontend/out
@@ -55,5 +51,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        # БЫЛО: actions/deploy-pages@v3
         uses: actions/deploy-pages@v4

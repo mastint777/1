@@ -23,27 +23,64 @@ jobs:
           script: |
             set -e
 
-            # если папки /opt/1 нет — создаём и клонируем репозиторий
+            # Clone or pull repository
             if [ ! -d /opt/1 ]; then
+              echo "Cloning repository..."
               mkdir -p /opt
               cd /opt
               git clone https://github.com/mastint777/1.git
+            else
+              echo "Updating repository..."
+              cd /opt/1
+              git pull
             fi
 
-            # обновляем код
             cd /opt/1
-            git pull
 
-            # ---- backend ----
+            # ---- Backend Setup ----
+            echo "Setting up backend..."
             cd /opt/1/backend
-            python3 -m venv venv || true
+
+            # Create virtual environment if it doesn't exist
+            if [ ! -d venv ]; then
+              python3 -m venv venv
+            fi
+
+            # Activate virtual environment and install dependencies
             . venv/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt
+            deactivate
 
-            # ---- frontend ----
+            # Install backend systemd service
+            echo "Installing backend service..."
+            cp /opt/1/deployment/backend.service /etc/systemd/system/backend.service
+            systemctl daemon-reload
+            systemctl enable backend.service
+
+            # ---- Frontend Setup ----
+            echo "Setting up frontend..."
             cd /opt/1/frontend
+
+            # Install Node.js dependencies and build
             npm install
             npm run build
 
-            # тут ПОКА только сборка, запуск настроим отдельно
+            # Install frontend systemd service
+            echo "Installing frontend service..."
+            cp /opt/1/deployment/frontend.service /etc/systemd/system/frontend.service
+            systemctl daemon-reload
+            systemctl enable frontend.service
+
+            # ---- Restart Services ----
+            echo "Restarting services..."
+            systemctl restart backend.service
+            systemctl restart frontend.service
+
+            # ---- Verify Services ----
+            echo "Checking service status..."
+            sleep 3
+            systemctl is-active --quiet backend.service && echo "✓ Backend is running" || echo "✗ Backend failed to start"
+            systemctl is-active --quiet frontend.service && echo "✓ Frontend is running" || echo "✗ Frontend failed to start"
+
+            echo "Deployment completed successfully!"

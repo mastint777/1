@@ -13,13 +13,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set SSH port
+        id: ssh_port
+        run: |
+          if [ -n "${{ secrets.VDS_PORT }}" ]; then
+            echo "port=${{ secrets.VDS_PORT }}" >> $GITHUB_OUTPUT
+          else
+            echo "port=22" >> $GITHUB_OUTPUT
+          fi
+
       - name: SSH to server and deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VDS_HOST }}
           username: ${{ secrets.VDS_USER }}
           password: ${{ secrets.VDS_PASSWORD }}
-          port: ${{ secrets.VDS_PORT || 22 }}
+          port: ${{ steps.ssh_port.outputs.port }}
           script_stop: true
           script: |
             set -e

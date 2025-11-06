@@ -66,9 +66,10 @@ The deployment workflow requires the following secrets to be configured in your 
 
 ### Important Notes:
 
-- **VDS_HOST**: Should be ONLY the IP address or hostname, without any protocol prefix (no `http://`, `https://`, or `ssh://`)
+- **VDS_HOST**: Should be ONLY the IP address or hostname, without any protocol prefix (no `http://`, `https://`, `ssh://`, or `tcp://`)
   - ✅ Correct: `192.168.1.100` or `example.com`
-  - ❌ Wrong: `ssh://192.168.1.100` or `https://example.com`
+  - ❌ Wrong: `ssh://192.168.1.100`, `tcp://192.168.1.100`, or `https://example.com`
+  - Note: The workflow automatically strips common protocol prefixes, but it's best to provide clean values
 
 - **VDS_USER**: The user should have sudo privileges without password prompt for systemd commands, or be root
 

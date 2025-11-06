@@ -66,10 +66,10 @@ The deployment workflow requires the following secrets to be configured in your 
 
 ### Important Notes:
 
-- **VDS_HOST**: Should be ONLY the IP address or hostname, without any protocol prefix (no `http://`, `https://`, `ssh://`, or `tcp://`)
+- **VDS_HOST**: Should be ONLY the IP address or hostname, without any protocol prefix or special characters
   - ✅ Correct: `192.168.1.100` or `example.com`
-  - ❌ Wrong: `ssh://192.168.1.100`, `tcp://192.168.1.100`, or `https://example.com`
-  - Note: The workflow automatically strips common protocol prefixes, but it's best to provide clean values
+  - ❌ Wrong: `ssh://192.168.1.100`, `tcp://192.168.1.100`, `tcp/6f02`, `https://example.com`, or any other format with protocols or special characters
+  - Note: The workflow automatically strips common protocol prefixes (both `protocol://` and `protocol/` formats), but it's best to provide clean values with only the IP address or hostname
 
 - **VDS_USER**: The user should have sudo privileges without password prompt for systemd commands, or be root
 
@@ -158,13 +158,18 @@ curl http://localhost:3000
 
 ### Deployment Fails with SSH Connection Error
 
-**Error**: `dial tcp: address tcp/xxxx: unknown port`
+**Error**: `dial tcp: lookup tcp/xxxx: unknown port` or `dial tcp: address tcp/xxxx: unknown port`
+
+**Root Cause**: The `VDS_HOST` secret contains invalid format (e.g., `tcp/6f02`, `ssh://ip`, etc.)
 
 **Solutions**:
-1. Verify `VDS_HOST` secret contains ONLY the IP/hostname (no `ssh://` prefix)
-2. Check that port 22 is open on your server's firewall
-3. Verify SSH credentials are correct
-4. If using a custom SSH port, set the `VDS_PORT` secret
+1. **Check VDS_HOST secret format**: The secret should contain ONLY the IP address or hostname
+   - ✅ Correct: `192.168.1.100` or `example.com`
+   - ❌ Wrong: `tcp/6f02`, `ssh://192.168.1.100`, `tcp://192.168.1.100`, `https://example.com`
+2. **Update the secret**: Go to repository Settings → Secrets and variables → Actions → Update `VDS_HOST`
+3. Check that port 22 is open on your server's firewall
+4. Verify SSH credentials are correct
+5. If using a custom SSH port, set the `VDS_PORT` secret
 
 ```bash
 # On your server, check if SSH is running

@@ -23,15 +23,34 @@ jobs:
             echo "port=22" >> $GITHUB_OUTPUT
           fi
 
-          # Sanitize VDS_HOST by removing any protocol prefixes
+          # Sanitize VDS_HOST by removing any protocol prefixes and invalid formats
           HOST="${{ secrets.VDS_HOST }}"
-          # Remove ssh://, tcp://, http://, https:// prefixes if present
+
+          # Remove common protocol prefixes (with ://)
           HOST="${HOST#ssh://}"
           HOST="${HOST#tcp://}"
           HOST="${HOST#http://}"
           HOST="${HOST#https://}"
+
+          # Remove protocol prefixes with single slash (e.g., tcp/, ssh/)
+          HOST="${HOST#tcp/}"
+          HOST="${HOST#ssh/}"
+          HOST="${HOST#http/}"
+          HOST="${HOST#https/}"
+
+          # Remove any leading slashes
+          HOST="${HOST#/}"
+          HOST="${HOST#/}"
+
           # Remove trailing slashes if any
           HOST="${HOST%/}"
+
+          # Additional validation: if HOST still contains invalid characters, log warning
+          if [[ "$HOST" =~ [^a-zA-Z0-9.\-] ]]; then
+            echo "Warning: VDS_HOST contains unexpected characters after sanitization: $HOST"
+            echo "Please check your VDS_HOST secret and ensure it's a valid IP address or hostname"
+          fi
+
           echo "host=${HOST}" >> $GITHUB_OUTPUT
 
       - name: SSH to server and deploy
